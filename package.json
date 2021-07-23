@@ -1,0 +1,21 @@
+{
+  "name": "0717datatable_using_express",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "chance": "^1.1.7",
+    "express": "^4.17.1",
+    "mockjs": "^1.1.0",
+    "nodemon": "^2.0.12",
+    "shuffle-array": "^1.0.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

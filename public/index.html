@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Client Side jQuery DataTables</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="./dist/style.css" />
+    <!--引用css-->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css" />
+</head>
+
+<body>
+    <div class="container" style="padding: 20px 0">
+        <div class="form-group d-flex justify-content-between">
+            <button type="button" class="btn border-secondary btn-light" data-toggle="modal" data-target="#addModal"
+                id="addBtn">
+                新增
+            </button>
+            <div id="toolBar"></div>
+        </div>
+        <div class="row">
+            <div class="col-xl-12">
+                <!-- 資料顯示 -->
+                <!-- <table id="DataTable" class=""></table> -->
+                <!-- 分頁 -->
+                <div id="dataTotalNum" class="dataTotalNum">123</div>
+                <div id="showPageNav"></div>
+            </div>
+        </div>
+        <!-- 新增和編輯modal -->
+        <div class="modal fade" id="addModal" data-backdrop="static">
+            <!-- modal-dialog-centered 垂直置中  -->
+            <!-- 調整 modal 視窗寬度，modal-xl(1140px)、modal-lg(800px)、modal-sm(300px)、沒寫 500px -->
+            <div class="modal-dialog modal-dialog-centered modal-sm">
+                <!-- modal-content 資訊區可分為 header、body、footer -->
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addModalLabel">新增</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="addForm" name="addForm" onsubmit="return validateForm()">
+                            <label for="addDate">Date</label>：<b id="addDate">2021-03-03</b>
+                        </form></br>
+                        <label for="name">English Name(*)</label>：<input type="text" id="name" class="inputform" />
+                        <div class="errorName text-danger"></div>
+                        <br />
+                        <label for="email">Email</label>：<br /><input type="text" id="email" class="inputform" />
+                        <div class="errorEmail text-danger"></div>
+                        <br />
+                        <label for="mobile">Phone</label>：<br /><input type="text" id="phone" class="inputform" />
+                        <div class="errorPhone text-danger"></div>
+                        <br />
+                        <input id="rowID" type="hidden" value="" />
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <!-- data-dimiss="modal" 關閉 modal -->
+                        <button type="button" class="btn border-secondary" data-dismiss="modal" id="closeModal">
+                            關閉
+                        </button>
+                        <button id="addSubmit" type="button" class="btn btn-light border-secondary">
+                            儲存
+                        </button>
+                        <button id="saveButton" type="button" class="btn btn-light border-secondary">
+                            更新
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <table id="DataTable" class="display" cellspacing="0" width="100%">
+        <thead>
+            <tr>
+                <th>id</th>
+                <th>name</th>
+                <th>email</th>
+                <th>phone</th>
+                <th>date</th>
+                <th>action</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+    <!--引用jQuery-->
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.js"></script>
+    <!--引用dataTables.js-->
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/dayjs@1.8.21/dayjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+    <!-- <script src="./src/app.js"></script> -->
+    <script type="module">
+        import TableCRUD from "./src/crud.js";
+        //   import { DATA } from "./src/data.js";
+        const currentDate = dayjs().add( 1, "day" ).format( "YYYY-MM-DD" );
+        // 宣告驗證規則
+        let emailRule =
+            /^\w+((-\w+)|(\.\w+))*\@[A-Za-z0-9]+((\.|-)[A-Za-z0-9]+)*\.[A-Za-z]+$/;
+        let phoneRule = /^09\d{2}-\d{6}$/;
+
+        $( function () {
+
+            /**
+     * 顯示搜尋結果
+     * @param {string} value
+     * @param {object[]} arr
+     */
+            const showSearchResult = ( value, arr = [] ) => {
+                $( "#jsonResult" )
+                    .empty()
+                    .html(
+                        `<pre>${JSON.stringify(
+                            demo.filterKeywords( value, arr ),
+                            null,
+                            1
+                        )}</pre>`
+                    );
+            };
+
+            $.ajax( {
+                url: '/data',
+                method: 'get',
+                dataType: 'json',
+                success: function ( data ) {
+                    $( '#DataTable' ).dataTable( {
+                        data: data.userData,
+                        columns: [
+                            { 'data': 'id' },
+                            { 'data': 'name' },
+                            { 'data': 'email' },
+                            { 'data': 'phone' },
+                            { 'data': 'date' },
+                            { 'data': "", "defaultContent": `<button id="${data.userData[0].id}" onclick='edititem();'>Edit</button><button onclick='deleteitem();'>Delete</button>` }
+                        ],
+                        lengthMenu: [5, 10, 15, 20, 25],
+                        deferRender: true,
+                        scrollY: 200,
+                        scrollCollapse: true,
+                        scroller: true,
+                    } )
+                }
+            } )
+
+            // axios
+            //     .get( "/data" )
+            //     .then( function ( response ) {
+            //         if ( response.status && response.status === 200 ) {
+            //             let DATA = response.data.userData
+            //             let demo = new TableCRUD( $( "#DataTable>tbody" ), {
+            //                 data: DATA,
+            //                 // 是否顯示自訂筆數
+            //                 showPerPage: true,
+            //                 // 是否顯示搜尋輸入框
+            //                 showSearch: true,
+            //                 // 是否顯示總筆數資訊
+            //                 showInfo: true,
+            //                 // 是否顯示分頁導航
+            //                 showPage: true,
+            //                 perPage: 5,
+            //                 // 更新單筆欄位資料
+            //                 onEdit: null,
+            //                 // 刪除單筆欄位資料
+            //                 onDelete: null,
+            //             } );
+            //             demo.setOptions( {
+            //                 data: DATA,
+            //                 // 是否顯示自訂筆數
+            //                 showPerPage: true,
+            //                 // 是否顯示搜尋輸入框
+            //                 showSearch: true,
+            //                 // 是否顯示總筆數資訊
+            //                 showInfo: true,
+            //                 // 是否顯示分頁導航
+            //                 showPage: true,
+            //                 perPage: 5,
+            //                 // 更新單筆欄位資料
+            //                 onEdit: function ( $tr, rowData ) {
+            //                     // $tr是修改按鈕的所有父元素，rowData是那一行的資料
+            //                     const saveData = DATA;
+            //                     // if (!rowData) return;
+            //                     $( "#rowID" ).val( rowData.id );
+            //                     $( "#name" ).val( rowData.name );
+            //                     $( "#email" ).val( rowData.email );
+            //                     $( "#phone" ).val( rowData.phone );
+            //                     $( "#addDate" ).text( rowData.addDate );
+
+            //                     $( "#addModal" ).modal( "show" );
+
+            //                     $( "#addBtn" ).on( "click", function ( e ) {
+            //                         e.preventDefault();
+            //                         $( "#addModal" ).modal( "show" );
+            //                     } );
+
+            //                     $( "#saveButton" ).click( function ( e ) {
+            //                         e.preventDefault();
+
+            //                         const feedbackData = {
+            //                             id: $( "#rowID" ).val(),
+            //                             name: $( "#name" ).val(),
+            //                             email: $( "#email" ).val(),
+            //                             phone: $( "#phone" ).val(),
+            //                             date: rowData.addDate,
+            //                         };
+            //                         demo.updateData( feedbackData, saveData );
+            //                         $( "#addModal" ).modal( "hide" );
+            //                     } );
+
+            //                     $( "#addModalLabel" ).text( `編輯` );
+
+            //                     if ( $( "#addSubmit" ) ) {
+            //                         $( "#addSubmit" ).hide();
+            //                         $( "#saveButton" ).show();
+            //                     }
+            //                 },
+            //                 // 刪除單筆欄位資料
+            //                 onDelete: function ( $tr, rowData ) {
+            //                     // callback function and do something
+            //                     const id = rowData.id;
+            //                     const saveData = DATA;
+            //                     saveData.forEach( function ( obj, i ) {
+            //                         if ( true && parseInt( obj.id ) === parseInt( id ) ) {
+            //                             saveData.splice( i, 1 );
+            //                         }
+            //                     } );
+            //                     $( "#searchTxt" ).val( "" );
+            //                     // // 更新資料
+            //                     demo.refetchTable( saveData );
+            //                     demo.perPage( saveData, $( "#ItemQuantity" ).val() );
+            //                 },
+            //             } );
+            //         }
+            //     } )
+            //     .catch( function ( error ) {
+            //         console.log( error );
+            //     } );
+
+
+            // 偵測新增按鈕
+            $( '#add-btn' ).on( 'click', function () {
+                $( "#adddate" ).html( tomorrow );
+                $( "#dialog-addconfirm" ).modal( "toggle" );
+            } );
+
+            // 新增->儲存按鈕
+            $( "#addconfirm-send" ).click( function () {
+                let enname = $( "#addenname" ).val();
+                let email = $( "#addemail" ).val();
+                let phone = $( "#addphone" ).val();
+
+                // === 新增欄位認證 ===
+                if ( enname !== "" && emailRule.test( email ) && phoneRule.test( phone ) ) {
+                    $( "#addform" )[0].reset();
+                    test.options.onAdd( {
+                        name: enname,
+                        email: email,
+                        phone: [phone],
+                    } )
+                } else {
+                    if ( enname == "" ) { $( '.formenname p' ).html( `此欄位必填` ) } else { $( '.formenname p' ).empty() }
+                    if ( !emailRule.test( email ) ) { $( '.formemail p' ).html( `Email 格式錯誤` ) } else { $( '.formemail p' ).empty() }
+                    if ( !phoneRule.test( phone ) ) { $( '.formphone p' ).html( `手機號碼格式錯誤` ) } else { $( '.formphone p' ).empty() }
+                }
+            } )
+
+            // 新增->關閉按鈕
+            $( "#addconfirm-close" ).click( function () {
+                $( "#addform" )[0].reset();
+                $( '.formenname p' ).empty();
+                $( '.formemail p' ).empty();
+                $( '.formphone p' ).empty();
+            } )
+
+            // 新增/修改-> X 按鈕
+            $( ".btn-close" ).click( function () {
+                $( "#addform" )[0].reset();
+                $( "#modifyform" )[0].reset();
+                $( '.formenname p' ).empty();
+                $( '.formemail p' ).empty();
+                $( '.formphone p' ).empty();
+            } )
+
+            // 修改->修改按鈕
+            $( "#modifyconfirm-send" ).click( function () {
+                let id = $( this ).attr( 'name' ).substring( 18 );
+                let enname = $( "#modName" ).val();
+                let email = $( "#modEmail" ).val();
+                let phone = $( "#modPhone" ).val();
+
+                // === 新增欄位認證 ===
+                if ( enname !== "" && emailRule.test( email ) && phoneRule.test( phone ) ) {
+                    $( "#modifyform" )[0].reset();
+                    if ( $.isFunction( test.options.onEdit ) ) {
+                        test.options.onEdit( Number( id ), {
+                            id: Number( id ),
+                            name: enname,
+                            email: email,
+                            phone: [phone],
+                        } );
+                    }
+                } else {
+                    if ( enname == "" ) { $( '.formenname p' ).html( `此欄位必填` ) } else { $( '.formenname p' ).empty() }
+                    if ( !emailRule.test( email ) ) { $( '.formemail p' ).html( `Email 格式錯誤` ) } else { $( '.formemail p' ).empty() }
+                    if ( !phoneRule.test( phone ) ) { $( '.formphone p' ).html( `手機號碼格式錯誤` ) } else { $( '.formphone p' ).empty() }
+                }
+            } )
+
+            // 修改->重新填寫按鈕
+            $( "#modifyconfirm-reset" ).click( function () {
+                $( "#modifyform" )[0].reset();
+            } )
+
+            // 修改->關閉按鈕
+            $( "#modifyconfirm-close" ).click( function () {
+                $( "#modifyform" )[0].reset();
+                $( '.formenname p' ).empty();
+                $( '.formemail p' ).empty();
+                $( '.formphone p' ).empty();
+            } )
+        } );
+    </script>
+</body>
+
+</html>
