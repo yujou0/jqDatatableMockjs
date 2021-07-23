@@ -12,10 +12,10 @@ class TableCRUD {
   }
   init(options = {}) {
     this.options = options;
-    this.refetchTable(options.data);
+    // this.refetchTable(options.data);
     this.saveData = options.data;
-    this.perPage(this.saveData, options.perPage);
-    this.creatToolBar();
+    // this.perPage(this.saveData, options.perPage);
+    // this.creatToolBar();
   }
   /**
    * 重新渲染 Table

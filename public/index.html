@@ -145,8 +145,92 @@
                         scrollCollapse: true,
                         scroller: true,
                     } )
-                }
-            } )
+                    let demo = new TableCRUD( $( "#DataTable>tbody" ), {
+                            data: data,
+                            // 是否顯示自訂筆數
+                            showPerPage: true,
+                            // 是否顯示搜尋輸入框
+                            showSearch: true,
+                            // 是否顯示總筆數資訊
+                            showInfo: true,
+                            // 是否顯示分頁導航
+                            showPage: true,
+                            perPage: 5,
+                            // 更新單筆欄位資料
+                            onEdit: null,
+                            // 刪除單筆欄位資料
+                            onDelete: null,
+                        } );
+                        demo.setOptions( {
+                            data: data,
+                            // 是否顯示自訂筆數
+                            showPerPage: true,
+                            // 是否顯示搜尋輸入框
+                            showSearch: true,
+                            // 是否顯示總筆數資訊
+                            showInfo: true,
+                            // 是否顯示分頁導航
+                            showPage: true,
+                            perPage: 5,
+                            // 更新單筆欄位資料
+                            onEdit: function ( $tr, rowData ) {
+                                // $tr是修改按鈕的所有父元素，rowData是那一行的資料
+                                const saveData = DATA;
+                                // if (!rowData) return;
+                                $( "#rowID" ).val( rowData.id );
+                                $( "#name" ).val( rowData.name );
+                                $( "#email" ).val( rowData.email );
+                                $( "#phone" ).val( rowData.phone );
+                                $( "#addDate" ).text( rowData.addDate );
+
+                                $( "#addModal" ).modal( "show" );
+
+                                $( "#addBtn" ).on( "click", function ( e ) {
+                                    e.preventDefault();
+                                    $( "#addModal" ).modal( "show" );
+                                } );
+
+                                $( "#saveButton" ).click( function ( e ) {
+                                    e.preventDefault();
+
+                                    const feedbackData = {
+                                        id: $( "#rowID" ).val(),
+                                        name: $( "#name" ).val(),
+                                        email: $( "#email" ).val(),
+                                        phone: $( "#phone" ).val(),
+                                        date: rowData.addDate,
+                                    };
+                                    demo.updateData( feedbackData, saveData );
+                                    $( "#addModal" ).modal( "hide" );
+                                } );
+
+                                $( "#addModalLabel" ).text( `編輯` );
+
+                                if ( $( "#addSubmit" ) ) {
+                                    $( "#addSubmit" ).hide();
+                                    $( "#saveButton" ).show();
+                                }
+                            },
+                            // 刪除單筆欄位資料
+                            onDelete: function ( $tr, rowData ) {
+                                // callback function and do something
+                                const id = rowData.id;
+                                const saveData = DATA;
+                                saveData.forEach( function ( obj, i ) {
+                                    if ( true && parseInt( obj.id ) === parseInt( id ) ) {
+                                        saveData.splice( i, 1 );
+                                    }
+                                } );
+                                $( "#searchTxt" ).val( "" );
+                                // // 更新資料
+                                demo.refetchTable( saveData );
+                                demo.perPage( saveData, $( "#ItemQuantity" ).val() );
+                            },
+                        } );
+                    }
+                } )
+
+             
 
             // axios
             //     .get( "/data" )
