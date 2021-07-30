@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Document</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="./dist/style.css" />
+</head>
+<body>
+  <div class="container" style="padding: 20px 0">
+    <div class="form-group d-flex justify-content-between">
+      <button type="button" class="btn border-secondary btn-light" data-toggle="modal" data-target="#addModal"
+        id="addBtn">
+        新增
+      </button>
+      <div id="toolBar"></div>
+    </div>
+    <div class="row">
+      <div class="col-xl-12">
+        <!-- 資料顯示 -->
+        <table id="DataTable" class=""></table>
+        <!-- 分頁 -->
+        <div id="dataTotalNum" class="dataTotalNum">123</div>
+        <div id="showPageNav"></div>
+      </div>
+    </div>
+    <!-- 新增和編輯modal -->
+    <div class="modal fade" id="addModal" data-backdrop="static">
+      <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addModalLabel">新增</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <form id="addForm" name="addForm" onsubmit="return validateForm()">
+              <label for="addDate">Date</label>：<b id="addDate">2021-03-03</b>
+            </form></br>
+            <label for="name">English Name(*)</label>：<input type="text" id="name" class="inputform" />
+            <div class="errorName text-danger"></div>
+            <br />
+            <label for="email">Email</label>：<br /><input type="text" id="email" class="inputform" />
+            <div class="errorEmail text-danger"></div>
+            <br />
+            <label for="mobile">Phone</label>：<br /><input type="text" id="phone" class="inputform" />
+            <div class="errorPhone text-danger"></div>
+            <br />
+            <input id="rowID" type="hidden" value="" />
+            </form>
+          </div>
+          <div class="modal-footer">
+            <!-- data-dimiss="modal" 關閉 modal -->
+            <button type="button" class="btn border-secondary" data-dismiss="modal" id="closeModal">
+              關閉
+            </button>
+            <button id="addSubmit" type="button" class="btn btn-light border-secondary">
+              儲存
+            </button>
+            <button id="saveButton" type="button" class="btn btn-light border-secondary">
+              更新
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+    integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+    crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/dayjs@1.8.21/dayjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="./dist/index.umd.js" type="module"></script>
+  <script>
+    const DATA = [
+      {
+        id: 1,
+        name: 'George Maria Anderson',
+        email: 'f.lhp@izxld.to',
+        phone: ['0996-001371'],
+        date: '2021-03-01',
+      },
+      {
+        id: 2,
+        name: 'Scott Dorothy Lewis',
+        email: 'x.uqtt@eoeuyhtxs.com.cn',
+        phone: ['0956-127745'],
+        date: '2021-03-02',
+      },
+      {
+        id: 3,
+        name: 'Donna Timothy Brown',
+        email: 'y.dnfhyk@odu.th',
+        phone: ['0959-871815'],
+        date: '2021-03-05',
+      },
+      {
+        id: 4,
+        name: 'Brenda Mary Miller',
+        email: 'v.bxtk@tjmpxkwbr.fo',
+        phone: ['0948-327435'],
+        date: '2021-03-10',
+      },
+      {
+        id: 5,
+        name: 'Steven Jose Martin',
+        email: 'o.gxs@tlcv.de',
+        phone: ['0953-745908'],
+        date: '2021-03-15',
+      },
+      {
+        id: 6,
+        name: 'Michelle Lisa Harris',
+        email: 'g.bxci@irqoiy.re',
+        phone: ['0931-155138'],
+        date: '2021-03-02',
+      },
+      {
+        id: 7,
+        name: 'Richard Scott Young',
+        email: 'c.synbon@qyouvyx.az',
+        phone: ['0934-303587'],
+        date: '2021-03-03',
+      },
+      {
+        id: 8,
+        name: 'Robert Jeffrey Allen',
+        email: 'i.bsyehyz@hiznxb.gi',
+        phone: ['0946-244714'],
+        date: '2021-03-06',
+      },
+      {
+        id: 9,
+        name: 'Melissa Karen Johnson',
+        email: 'p.riefbalc@boqmwc.lu',
+        phone: ['0905-131221'],
+        date: '2021-03-21',
+      },
+      {
+        id: 10,
+        name: 'Dorothy Karen Harris',
+        email: 'k.fdu@ymrjgxs.lk',
+        phone: ['0970-944111'],
+        date: '2021-03-30',
+      },
+      {
+        id: 11,
+        name: 'John Linda Anderson',
+        email: 's.rwdrw@jnbsdplf.pm',
+        phone: ['0922-782576'],
+        date: '2021-03-31',
+      },
+      {
+        id: 12,
+        name: 'Larry Christopher Hernandez',
+        email: 'k.cctncwn@kpwpkoor.museum',
+        phone: ['0927-842481'],
+        date: '2021-03-01',
+      },
+      {
+        id: 13,
+        name: 'Karen Nancy Thomas',
+        email: 'n.xlnl@hkpg.mp',
+        phone: ['0953-883864'],
+        date: '2021-03-22',
+      },
+      {
+        id: 14,
+        name: 'Anthony Sarah Harris',
+        email: 'w.lipm@qmexko.ye',
+        phone: ['0974-331398'],
+        date: '2021-03-24',
+      },
+      {
+        id: 15,
+        name: 'Angela William Garcia',
+        email: 'm.ovcmohtpb@akzovhh.de',
+        phone: ['0966-210234'],
+        date: '2021-03-11',
+      },
+      {
+        id: 16,
+        name: 'Sandra David Taylor',
+        email: 'y.hwzpr@qoame.ke',
+        phone: ['0993-787941'],
+        date: '2021-03-17',
+      },
+      {
+        id: 17,
+        name: 'David Laura Anderson',
+        email: 'z.zicwf@grtwucgkt.ly',
+        phone: ['0973-644816'],
+        date: '2021-03-05',
+      },
+      {
+        id: 18,
+        name: 'Jason Dorothy Rodriguez',
+        email: 'u.ykeweu@jsoqrxte.pf',
+        phone: ['0957-447222'],
+        date: '2021-03-04',
+      },
+      {
+        id: 19,
+        name: 'Kevin Steven Robinson',
+        email: 'o.zcvql@ixojb.gn',
+        phone: ['0909-131886'],
+        date: '2021-03-09',
+      },
+      {
+        id: 20,
+        name: 'Betty Sharon Jackson',
+        email: 's.mtrlx@wnivluqes.ki',
+        phone: ['0930-335482'],
+        date: '2021-03-10',
+      },
+      {
+        id: 21,
+        name: 'Robert Donald Harris',
+        email: 'l.njhlplihy@ulioq.ci',
+        phone: ['0918-582288'],
+        date: '2021-03-29',
+      },
+      {
+        id: 22,
+        name: 'Joseph Sharon Lopez',
+        email: 'e.nciqeidv@qzoinaudbx.pw',
+        phone: ['0938-217401'],
+        date: '2021-03-18',
+      },
+      {
+        id: 23,
+        name: 'Steven Mark Jones',
+        email: 'j.zmanq@axmsx.tn',
+        phone: ['0931-283902'],
+        date: '2021-03-19',
+      },
+      {
+        id: 24,
+        name: 'Sandra Eric Thomas',
+        email: 'k.svhwbemp@mjnmh.ma',
+        phone: ['0999-821075'],
+        date: '2021-03-20',
+      },
+      {
+        id: 25,
+        name: 'Deborah Daniel Walker',
+        email: 'p.giszzjsg@ixqfmlnxo.cy',
+        phone: ['0930-744958'],
+        date: '2021-03-03',
+      },
+    ];
+    
+    let demo = new TableCRUD( $( "#DataTable>tbody" ), {
+      data: DATA,
+      // 是否顯示自訂筆數
+      showPerPage: true,
+      // 是否顯示搜尋輸入框
+      showSearch: true,
+      // 是否顯示總筆數資訊
+      showInfo: true,
+      // 是否顯示分頁導航
+      showPage: true,
+      perPage: 5,
+      // 更新單筆欄位資料
+      onEdit: null,
+      // 刪除單筆欄位資料
+      onDelete: null,
+    } );
+
+    demo.setOptions( {
+      data: DATA,
+      // 是否顯示自訂筆數
+      showPerPage: true,
+      // 是否顯示搜尋輸入框
+      showSearch: true,
+      // 是否顯示總筆數資訊
+      showInfo: true,
+      // 是否顯示分頁導航
+      showPage: true,
+      perPage: 5,
+      // 更新單筆欄位資料
+      onEdit: function ( $tr, rowData ) {
+        // $tr是修改按鈕的所有父元素，rowData是那一行的資料
+        const saveData = DATA;
+        // if (!rowData) return;
+        $( "#rowID" ).val( rowData.id );
+        $( "#name" ).val( rowData.name );
+        $( "#email" ).val( rowData.email );
+        $( "#phone" ).val( rowData.phone );
+        $( "#addDate" ).text( rowData.addDate );
+
+        $( "#addModal" ).modal( "show" );
+
+        $( "#addBtn" ).on( "click", function ( e ) {
+          e.preventDefault();
+          $( "#addModal" ).modal( "show" );
+        } );
+
+        $( "#saveButton" ).click( function ( e ) {
+          e.preventDefault();
+
+          const feedbackData = {
+            id: $( "#rowID" ).val(),
+            name: $( "#name" ).val(),
+            email: $( "#email" ).val(),
+            phone: $( "#phone" ).val(),
+            date: rowData.addDate,
+          };
+          demo.updateData( feedbackData, saveData );
+          $( "#addModal" ).modal( "hide" );
+        } );
+
+        $( "#addModalLabel" ).text( `編輯` );
+
+        if ( $( "#addSubmit" ) ) {
+          $( "#addSubmit" ).hide();
+          $( "#saveButton" ).show();
+        }
+      },
+      // 刪除單筆欄位資料
+      onDelete: function ( $tr, rowData ) {
+        // callback function and do something
+        const saveData = DATA;
+        demo.removeData( saveData, rowData );
+        $( "#searchTxt" ).val( "" );
+      },
+      onAdd: function ( data ) {
+        demo.addItem( data );
+      },
+    } );
+
+    const currentDate = dayjs().add( 1, "day" ).format( "YYYY-MM-DD" );
+    // 宣告驗證規則
+    let emailRule =
+      /^\w+((-\w+)|(\.\w+))*\@[A-Za-z0-9]+((\.|-)[A-Za-z0-9]+)*\.[A-Za-z]+$/;
+    let phoneRule = /^09\d{2}-\d{6}$/;
+
+    $( function () {
+      // 新增
+      $( "#addSubmit" ).on( "click", function () {
+        let emailResult = emailRule.test( $( "#email" ).val() );
+        let phoneResult = phoneRule.test( $( "#phone" ).val() );
+        // 宣告day是當下時間再加一天
+        let currentDate = dayjs().add( 1, "day" ).format( "YYYY-MM-DD" );
+
+        // 驗證
+        if ( $( "#name" ).val() == "" ) $( ".errorName" ).text( "此欄位必填" );
+        else $( ".errorName" ).text( "" );
+        if ( !emailResult ) $( ".errorEmail" ).text( "email格式錯誤" );
+        else $( ".errorEmail" ).text( "" );
+        if ( !phoneResult ) $( ".errorPhone" ).text( "手機號碼格式錯誤" );
+        else $( ".errorPhone" ).text( "" );
+
+        // 如果驗證都通過，提交表單
+        if ( $( "#name" ).val() !== "" && emailResult && phoneResult ) {
+          let count = DATA.length + 1;
+          demo.options.onAdd( {
+            id: count,
+            name: $( "#name" ).val(),
+            email: $( "#email" ).val(),
+            phone: [$( "#phone" ).val()],
+            date: currentDate,
+          } ) && $( "#addModal" ).modal( "toggle" );
+          count++;
+        }
+      } );
+
+      $( "#searchTxt" ).val( "" );
+      // 顯示筆數
+      $( "#ItemQuantity" ).on( "change", function () {
+        demo.perPage( DATA, $( "#ItemQuantity" ).val() );
+      } );
+      // 點擊新增時彈框input清空
+      $( "#addBtn" ).on( "click", function ( e ) {
+        $( "#addDate" ).text( currentDate );
+        $( "#name,#email,#phone" ).val( "" );
+
+        $( "#addModalLabel" ).text( `新增` );
+        $( "#addSubmit" ).show();
+        $( "#saveButton" ).hide();
+        $( ".errorName,.errorEmail,.errorPhone" ).text( "" );
+      } );
+    } );
+  </script>
+</body>
+
+</html>

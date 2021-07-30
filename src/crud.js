@@ -1,10 +1,11 @@
-// import DEFAULT from "./default.js";
+import DEFAULT from "./default.js";
 import methods from "./methods.js";
+import { DATA } from "./data.js";
 class TableCRUD {
   constructor(element, options = {}) {
     this.$element = element;
     // 繼承外部客製選項
-    // this.options = Object.freeze($.extend(true, {}, DEFAULT, options));
+    this.options = Object.freeze($.extend(true, {}, DEFAULT, options));
     // 暫存 Table Data
     this.saveData = [];
     // 初始化
@@ -12,13 +13,15 @@ class TableCRUD {
   }
   init(options = {}) {
     this.options = options;
-    // this.refetchTable(options.data);
+    this.refetchTable(options.data);
     this.saveData = options.data;
-    // this.perPage(this.saveData, options.perPage);
-    // this.creatToolBar();
+    this.perPage(this.saveData, options.perPage);
+    this.creatToolBar();
+    this.bind(options);
   }
   /**
    * 重新渲染 Table
+   * @param {object} =[] items
    */
   refetchTable(items) {
     const { $element, options } = this;
@@ -54,39 +57,7 @@ class TableCRUD {
           `<td style="width:20%;" data-id="${item.id}"><a class="btn btn-success edit-btn">Edit</a> | <a class="btn btn-danger delete-btn">Delete</a></td>`
         )
       );
-
       $element.append(row);
-    });
-
-    $(".edit-btn").on("click", function (e) {
-      // $tr是修改按鈕的所有父元素
-      const $tr = $(this).parents();
-      // _id是修改按鈕的父元素的id
-      const _id = $(this).parent().data("id");
-      let rowData = {};
-
-      $.each(options.data, function (index, data) {
-        if (parseInt(_id) === parseInt(data.id)) {
-          rowData = {
-            id: data.id,
-            name: data.name,
-            email: data.email,
-            phone: data.phone,
-            date: data.date,
-          };
-        }
-        if ($.isFunction(options.onEdit)) {
-          options.onEdit($tr, rowData);
-        }
-      });
-    });
-
-    $(".delete-btn").on("click", function (e) {
-      if ($.isFunction(options.onDelete)) {
-        options.onDelete(e.target, e.target.parentNode.parentNode);
-      } else {
-        console.error("Must be a function.");
-      }
     });
   }
   /**
@@ -145,6 +116,99 @@ class TableCRUD {
     // 更新資料
     this.refetchTable(saveData);
     this.perPage(saveData, $("#ItemQuantity").val());
+    this.bind(this.options);
+  }
+  /**
+   * 刪除單筆資料
+   * @param {object} feedbackData
+   * @param {object} rowData
+   */
+  removeData(saveData, rowData) {
+    const id = rowData.id;
+
+    saveData.forEach(function (obj, i) {
+      if (true && parseInt(obj.id) === parseInt(id)) {
+        saveData.splice(i, 1);
+      }
+    });
+    this.refetchTable(saveData);
+    this.perPage(saveData, $("#ItemQuantity").val());
+    this.bind(this.options);
+  }
+  /**
+   * 綁定事件
+   * @param {Object} [options={}] - 變更的選項參數
+   */
+  bind(options = {}) {
+    /**
+     * 顯示搜尋結果
+     * @param {string} value
+     * @param {object[]} arr
+     */
+    const showSearchResult = (value, arr = []) => {
+      $("#jsonResult")
+        .empty()
+        .html(
+          `<pre>${JSON.stringify(
+            demo.filterKeywords(value, arr),
+            null,
+            1
+          )}</pre>`
+        );
+    };
+
+    // === 偵測搜尋input ===
+    $("#search").on("keyup", function () {
+      let value = $(this).val();
+
+      // 事件延遲1秒執行, 減少reflow
+      setTimeout(() => {
+        this.search(value, this.data, options);
+      }, 1000);
+    });
+
+    // 搜尋
+    $("#searchTxt").on("keyup", function () {
+      const _value = $(this).val();
+      // 事件延遲0.5秒執行, 減少reflow
+      setTimeout(() => {
+        showSearchResult(_value, DATA);
+      }, 500);
+    });
+    $(".edit-btn").on("click", function (e) {
+      // $tr是修改按鈕的所有父元素
+      const $tr = $(this).parents();
+      // _id是修改按鈕的父元素的id
+      const _id = $(this).parent().data("id");
+
+      console.log(_id);
+      console.log($tr[0]);
+      let rowData = {};
+
+      $.each(options.data, function (index, data) {
+        if (parseInt(_id) === parseInt(data.id)) {
+          console.log(data);
+          rowData = {
+            id: data.id,
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+            date: data.date,
+          };
+        }
+        if ($.isFunction(options.onEdit)) {
+          options.onEdit($tr, rowData);
+        }
+      });
+    });
+
+    $(".delete-btn").on("click", function (e) {
+      if ($.isFunction(options.onDelete)) {
+        options.onDelete(e.target, e.target.parentNode.parentNode);
+      } else {
+        console.error("Must be a function.");
+      }
+    });
   }
 }
 Object.assign(TableCRUD.prototype, methods);

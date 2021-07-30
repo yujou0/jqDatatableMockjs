@@ -1,0 +1,55 @@
+table {
+  width: 100%;
+
+  border-collapse: collapse;
+  @include mobile {
+    border: $table-border;
+  }
+}
+
+thead > tr > th,
+tbody > tr > td {
+  padding: 0.25rem 0.5rem;
+  border: $table-border;
+  @include mobile {
+    border: 0px;
+  }
+}
+table {
+  @include mobile {
+    border: 0px;
+  }
+}
+tbody > tr {
+  @include mobile {
+    border: $table-border;
+    margin-bottom: 10px;
+  }
+}
+table,
+tbody,
+th,
+td,
+tr {
+  @include mobile {
+    display: block;
+  }
+}
+thead {
+  @include mobile {
+    display: none;
+  }
+}
+.th__item--show {
+  display: none;
+  @include mobile {
+    display: block;
+  }
+}
+.page-link {
+  color: black;
+}
+#pages{
+  display: flex;
+  justify-content: flex-end;
+}

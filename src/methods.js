@@ -79,19 +79,13 @@ export default {
            <a class="btn btn-success edit-btn">Edit</a> | <a class="btn btn-danger delete-btn">Delete</a></td>
          </tr>
        `);
-        }
-      } else {
-        $("#DataTable tbody").append(`
-         <tr>
-           <td colspan="5">No Result</td>
-         </tr>
-     `);
-      }
-      $(".edit-btn").on("click", function (e) {
+       $(".edit-btn").on("click", function (e) {
+        // $tr是修改按鈕的所有父元素
         const $tr = $(this).parents();
+        // _id是修改按鈕的父元素的id
         const _id = $(this).parent().data("id");
         let rowData = {};
-
+  
         $.each(options.data, function (index, data) {
           if (parseInt(_id) === parseInt(data.id)) {
             rowData = {
@@ -102,12 +96,12 @@ export default {
               date: data.date,
             };
           }
+          if ($.isFunction(options.onEdit)) {
+            options.onEdit($tr, rowData);
+          }
         });
-        if ($.isFunction(options.onEdit)) {
-          options.onEdit($tr, rowData);
-        }
       });
-      //   onDelete
+  
       $(".delete-btn").on("click", function (e) {
         if ($.isFunction(options.onDelete)) {
           options.onDelete(e.target, e.target.parentNode.parentNode);
@@ -115,10 +109,17 @@ export default {
           console.error("Must be a function.");
         }
       });
+        }
+      } else {
+        $("#DataTable tbody").append(`
+         <tr>
+           <td colspan="5">No Result</td>
+         </tr>
+     `);
+      }
     }
     // 頁數長度
     let pageLen = pageBox.length - 1;
-
     // 第一頁
     $("#firstPage").on("click", function (e) {
       e.preventDefault();
@@ -127,6 +128,7 @@ export default {
       $("#allPage li")
         .eq((pageIndex = 0))
         .addClass("active");
+        console.log(options)
     });
 
     // 最後一頁
@@ -180,6 +182,7 @@ export default {
     });
     // 開始顯示第一頁資料
     page(pageBox[pageIndex]);
+    // this.bind(options)
     // 開始第一筆 active
     $("#allPage li").eq(0).addClass("active");
   },
@@ -187,35 +190,23 @@ export default {
    * 表單新增
    * @param {object[]} data
    */
-  addItem(data = {}) {
+  addItem(newItem) {
     const { options } = this;
 
-    // 宣告點擊儲存新增次數(從一開始的陣列繼續往後上數字)用來取id名稱
-    let count = data.length + 1;
-    // 宣告day是當下時間再加一天
-    let currentDate = dayjs().add(1, "day").format("YYYY-MM-DD");
-
-    let newItem = {
-      id: count,
-      name: $("#name").val(),
-      email: $("#email").val(),
-      phone: [$("#phone").val()],
-      date: currentDate,
-    };
-    count++;
-    $("#searchTxt").val("");
+    this.refetchTable(options.data);
     // 新值加入data
-    data.push(newItem);
+    options.data.push(newItem);
     // 加入新值後重新渲染畫面
-    this.perPage(data, options.perPage);
+    this.perPage(options.data, options.perPage);
+    this.bind(options)
     if (options.showInfo)
       $(".dataTotalNum").html(
-        "<div>" + "共" + data.length + "筆資料" + "</div>"
+        "<div>" + "共" + options.data.length + "筆資料" + "</div>"
       );
     // 送出後欄位清空
     $("#name,#email,#phone").val("");
 
-    return data[data.length - 1];
+    // return options.data[options.data.length - 1];
   },
   /**
    * 關鍵字搜尋
@@ -240,6 +231,7 @@ export default {
     // 依搜尋後資料重新渲染表格
     this.refetchTable(result);
     this.perPage(result, $("#ItemQuantity").val());
+    this.bind(this.options);
 
     if (this.options.showInfo)
       $(".dataTotalNum").html(
@@ -250,9 +242,12 @@ export default {
     if (!value) {
       this.refetchTable(_array);
       this.perPage(_array, $("#ItemQuantity").val());
-      if (this.options.showInfo) $(".dataTotalNum").html(
-        "<div>" + "共" + _array.length + "筆資料" + "</div>"
-      );
+      this.bind(this.options);
+
+      if (this.options.showInfo)
+        $(".dataTotalNum").html(
+          "<div>" + "共" + _array.length + "筆資料" + "</div>"
+        );
     }
     return result;
   },
